@@ -22,7 +22,7 @@ public class MainContent {
     public boolean alwaysDraw = true;
     public int colorMode = 0;
     public static int piledUp = 0;
-//    public static int piledUpChunk = 0;
+    //    public static int piledUpChunk = 0;
     public static long toppleOverflow;
     public static int pileX;
     public static int pileY;
@@ -34,18 +34,22 @@ public class MainContent {
     private Bitmap bitmapBuffer;
     private boolean changed = true;
     private int pileAmountExp = 0;
+    private float opacity = 0.4f;
+    private boolean useOpacity = false;
 
     private final int[][] colors = new int[][]{
 //            new int[]{0xFF5E99FF, 0xFF39B54A, 0xFFE0DD3C, 0xFFCE3723, 0xFFFFFFFF},
             new int[]{0xFF76BCFA, 0xFF7C944B, 0xFFF6AA2E, 0xFFAE1E0A, 0xFFFFFFFF},
+            new int[]{0xFF76BCFA, 0xFF7C944B, 0xFFF6AA2E, 0xFFAE1E0A, 0x00000000},
             new int[]{0xFF444444, 0xFF777777, 0xFFAAAAAA, 0xFFDDDDDD, 0xFFFFFFFF},
-            new int[]{0xFF666666, 0xFF998888, 0xFF889988, 0xFF888899, 0xFFFFFFFF}
+            new int[]{0xFF666666, 0xFF888888, 0xFF888888, 0xFF888888, 0xFFFFFFFF}
     };
 
     public final String[] colorNames = new String[]{
-            "colors",
+            "colors & overflow",
+            "colors only",
             "shades",
-            "overflows"
+            "overflow"
     };
 
     public MainContent(Resources resources) {
@@ -97,16 +101,29 @@ public class MainContent {
         }
     }
 
+    public void toggleUseOpacity() {
+        useOpacity = !useOpacity;
+        changed = true;
+    }
+
+    public boolean usesOpacity() {
+        return useOpacity;
+    }
+
     public void clear() {
         for (int i = 0; i < toppleMap.length; i++) {
             toppleMap[i] = 0;
         }
-        pileX = WIDTH / 2;
-        pileY = HEIGHT / 2;
+        resetPileXY();
         piledUp = 0;
 //        piledUpChunk = 0;
         pileUp = false;
         changed = true;
+    }
+
+    public void resetPileXY() {
+        pileX = WIDTH / 2;
+        pileY = HEIGHT / 2;
     }
 
     private long topple() {
@@ -140,9 +157,9 @@ public class MainContent {
     public void update(double secondsPerFrame) {
         if (pileUp) {
 //            if (piledUpChunk < 256) {
-                pileOne();
+            pileOne();
 //            } else {
-                pileUp = false;
+            pileUp = false;
 //            }
         }
 //        else {
@@ -175,6 +192,7 @@ public class MainContent {
         canvas.clipRect(0, 0, viewWidth - offsetX * 2, viewHeight - offsetY * 2);
         canvas.scale(scaleFactor, scaleFactor);
 
+
         // Draw on actual lo-res bitmap, for speed and pixels
         if (bitmapBuffer == null) {
             bitmapBuffer = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
@@ -200,9 +218,35 @@ public class MainContent {
     private void drawToppleMap(Bitmap buffer) {
         for (int x = 0; x < WIDTH; x++) {
             for (int y = 0; y < HEIGHT; y++) {
-                buffer.setPixel(x, y, getColorForValue(toppleMap[toppleIndex(x, y)]));
+                int color = getColorForValue(toppleMap[toppleIndex(x, y)]);
+                if (color != 0) {
+                    if (useOpacity) {
+                        int color0 = buffer.getPixel(x, y);
+                        buffer.setPixel(x, y, blend(color, color0, opacity));
+                    } else {
+                        buffer.setPixel(x, y, color);
+                    }
+                }
             }
         }
+    }
+
+    private int blend(int color1, int color2, float w) {
+        int r1 = (color1 >> 16) & 0xff;
+        int g1 = (color1 >> 8) & 0xff;
+        int b1 = (color1) & 0xff;
+
+        int r2 = (color2 >> 16) & 0xff;
+        int g2 = (color2 >> 8) & 0xff;
+        int b2 = (color2) & 0xff;
+
+        float iw = 1 - w;
+
+        int r = (int) (r1 * w + r2 * iw);
+        int g = (int) (g1 * w + g2 * iw);
+        int b = (int) (b1 * w + b2 * iw);
+
+        return 0xff000000 | (r << 16) | (g << 8) | b;
     }
 
     private int getColorForValue(short v) {

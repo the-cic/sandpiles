@@ -120,12 +120,18 @@ public class MainContentView extends SurfaceView implements SurfaceHolder.Callba
         } else if (xPerc < 0.1 && yPerc > 0.4 && yPerc < 0.6) {
             mainContent.clear();
             return false;
+        } else if (xPerc > 0.9 && yPerc > 0.4 && yPerc < 0.6) {
+            mainContent.resetPileXY();
+            return false;
         } else if (xPerc > 0.3 && xPerc < 0.7 && yPerc < 0.2) {
             if (xPerc < 0.5) {
                 mainContent.decPileAmount();
             } else {
                 mainContent.incPileAmount();
             }
+            return false;
+        } else if (xPerc > 0.3 && xPerc < 0.7 && yPerc > 0.8) {
+            mainContent.toggleUseOpacity();
             return false;
         }
 
@@ -172,6 +178,7 @@ public class MainContentView extends SurfaceView implements SurfaceHolder.Callba
             canvas.drawText("Piled: " + MainContent.piledUp, 20, 20 + (line++) * 20, getFpsPaint());
             canvas.drawText("Overflow: " + MainContent.toppleOverflow, 20, 20 + (line++) * 20, getFpsPaint());
             canvas.drawText("Color mode: " + mainContent.colorNames[mainContent.colorMode], 20, 20 + (line++) * 20, getFpsPaint());
+            canvas.drawText("Use opacity: " + (mainContent.usesOpacity() ? "blend" : "opaque"), 20, 20 + (line++) * 20, getFpsPaint());
             canvas.drawText("Draw: " + (mainContent.alwaysDraw ? "always" : "finished"), 20, 20 + (line++) * 20, getFpsPaint());
         }
     }
